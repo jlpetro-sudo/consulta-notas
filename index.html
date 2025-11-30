@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Consulta de notas</title>
+  <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
+  <style>
+    body { font-family: Arial, sans-serif; max-width: 500px; margin: 40px auto; }
+    input { padding: 8px; width: 100%; box-sizing: border-box; margin-bottom: 10px; }
+    button { padding: 8px 16px; }
+    #resultado { margin-top: 15px; font-weight: bold; }
+  </style>
+</head>
+<body>
+  <h1>Consulta tu nota</h1>
+  <p>Escribe tu número de documento (DNI) tal como se registró:</p>
+
+  <input type="text" id="dni" placeholder="Número de documento">
+  <button onclick="buscarNota()">Buscar</button>
+
+  <p id="resultado"></p>
+
+  <script>
+    let notas = {};
+    let datosCargados = false;
+
+    // Cargar el CSV al iniciar la página
+    fetch('notas.csv')
+      .then(res => res.text())
+      .then(texto => {
+        const parsed = Papa.parse(texto, {
+          header: true,
+          skipEmptyLines: true
+        });
+        parsed.data.forEach(fila => {
+          const dni = String(fila.DNI || '').trim();
+          const nota = String(fila.Nota || '').trim();
+          if (dni) {
+            notas[dni] = nota;
+          }
+        });
+        datosCargados = true;
+      })
+      .catch(err => {
+        console.error('Error al cargar notas.csv:', err);
+        document.getElementById('resultado').textContent =
+          'Error al cargar las notas. Consulta al profesor.';
+      });
+
+    function buscarNota() {
+      const dni = document.getElementById('dni').value.trim();
+      const resultado = document.getElementById('resultado');
+
+      if (!datosCargados) {
+        resultado.textContent = 'Las notas todavía se están cargando. Intenta de nuevo en unos segundos.';
+        return;
+      }
+
+      if (!dni) {
+        resultado.textContent = 'Por favor, ingresa tu DNI.';
+        return;
+      }
+
+      if (dni in notas) {
+        resultado.textContent = 'Tu nota es: ' + notas[dni];
+      } else {
+        resultado.textContent = 'No se encontró un registro para ese DNI.';
+      }
+    }
+  </script>
+</body>
+</html>
