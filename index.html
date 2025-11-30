@@ -24,22 +24,38 @@
     let notas = {};
     let datosCargados = false;
 
+    function limpiarDni(str) {
+      // Quita espacios, puntos y guiones
+      return String(str).replace(/[\s\.\-]/g, '');
+    }
+
     // Cargar el CSV al iniciar la página
     fetch('notas.csv')
       .then(res => res.text())
       .then(texto => {
         const parsed = Papa.parse(texto, {
-          header: true,
-          skipEmptyLines: true
+          header: false,       // no usamos nombres de columnas
+          skipEmptyLines: true // ignora filas vacías
+          // sin "delimiter": Papaparse intenta detectarlo (coma o punto y coma)
         });
-        parsed.data.forEach(fila => {
-          const dni = String(fila.DNI || '').trim();
-          const nota = String(fila.Nota || '').trim();
+
+        parsed.data.forEach((fila, index) => {
+          // fila es un array: [columna0, columna1, ...]
+          if (!fila || fila.length < 2) return;
+
+          // Saltar la primera fila (encabezados)
+          if (index === 0) return;
+
+          const dni = limpiarDni(fila[0]);
+          const nota = String(fila[1]).trim();
+
           if (dni) {
             notas[dni] = nota;
           }
         });
+
         datosCargados = true;
+        console.log("DNIs cargados:", Object.keys(notas).length);
       })
       .catch(err => {
         console.error('Error al cargar notas.csv:', err);
@@ -48,7 +64,8 @@
       });
 
     function buscarNota() {
-      const dni = document.getElementById('dni').value.trim();
+      const dniInput = document.getElementById('dni').value;
+      const dni = limpiarDni(dniInput);
       const resultado = document.getElementById('resultado');
 
       if (!datosCargados) {
