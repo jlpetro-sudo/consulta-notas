@@ -2,13 +2,12 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8">
-  <title>Consulta de notas</title>
+  <title>Consulta tu nota</title>
   <style>
     body { font-family: Arial, sans-serif; max-width: 600px; margin: 40px auto; }
     input { padding: 8px; width: 100%; box-sizing: border-box; margin-bottom: 10px; }
     button { padding: 8px 16px; }
     #resultado { margin-top: 15px; font-weight: bold; }
-    #debug { margin-top: 25px; font-size: 0.9em; color: #555; white-space: pre-wrap; }
   </style>
 </head>
 <body>
@@ -19,73 +18,58 @@
   <button onclick="buscarNota()">Buscar</button>
 
   <p id="resultado"></p>
-  <div id="debug"></div>
 
   <script>
-    let notas = {};
-    let datosCargados = false;
+    // AQUÍ ESTÁN TODAS LAS NOTAS
+    const notas = {
+      "1070810891": "3.2",
+      "1069481134": "2.9",
+      "1068581820": "2.9",
+      "1138075510": "3.9",
+      "1025642590": "3.7",
+      "1064191746": "3.0",
+      "1068137195": "3.2",
+      "1067163428": "3.0",
+      "1062954896": "3.7",
+      "1062427789": "2.9",
+      "1067876454": "3.7",
+      "1043653361": "2.9",
+      "1062605578": "3.2",
+      "1062429770": "2.9",
+      "1032178197": "3.9",
+      "1068661762": "3.9",
+      "1064312082": "2.9",
+      "1003737189": "3.7",
+      "1137975574": "3.9",
+      "1137976790": "3.9",
+      "1037471278": "3.9",
+      "1104258193": "3.5",
+      "1067884648": "3.9",
+      "1133794856": "2.9",
+      "1071348654": "0.0",
+      "1062428708": "2.8",
+      "1003191385": "0.0",
+      "1062432318": "0.0",
+      "1069986447": "2.8",
+      "1062434535": "0.0",
+      "1064986282": "2.9",
+      "1071431872": "2.9",
+      "1007851116": "0.0",
+      "1003431286": "3.5",
+      "1003002724": "2.9",
+      "1064981470": "0.0",
+      "1137977688": "2.9"
+    };
 
     function limpiarDni(str) {
       // Quita espacios, puntos y guiones
       return String(str).replace(/[\s.\-]/g, '');
     }
 
-    // Cargar el CSV al iniciar la página
-    fetch('notas.csv?ver=' + Date.now()) // ?ver=... evita caché
-      .then(res => res.text())
-      .then(texto => {
-        // Eliminar posible BOM al inicio
-        if (texto.charCodeAt(0) === 0xFEFF) {
-          texto = texto.slice(1);
-        }
-
-        const lineas = texto.split(/\r?\n/).filter(l => l.trim() !== '');
-
-        // i = 1 para saltar encabezados (primera fila)
-        for (let i = 1; i < lineas.length; i++) {
-          const linea = lineas[i].trim();
-          if (!linea) continue;
-
-          // Detectar si usa ';' o ',' como separador
-          const sep = linea.includes(';') ? ';' : ',';
-          const partes = linea.split(sep);
-
-          if (partes.length < 2) continue;
-
-          const dni = limpiarDni(partes[0]);
-          const nota = String(partes[1] || '').trim();
-
-          if (dni) {
-            notas[dni] = nota;
-          }
-        }
-
-        datosCargados = true;
-
-        // Mostrar info de debug
-        const claves = Object.keys(notas);
-        const debugDiv = document.getElementById('debug');
-        debugDiv.textContent =
-          'Debug:\n' +
-          'Líneas leídas: ' + lineas.length + '\n' +
-          'DNIs cargados: ' + claves.length + '\n' +
-          'Primeros DNIs:\n' + claves.slice(0, 5).join('\n');
-      })
-      .catch(err => {
-        console.error('Error al cargar notas.csv:', err);
-        document.getElementById('resultado').textContent =
-          'Error al cargar las notas. Consulta al profesor.';
-      });
-
     function buscarNota() {
       const dniInput = document.getElementById('dni').value;
       const dni = limpiarDni(dniInput);
       const resultado = document.getElementById('resultado');
-
-      if (!datosCargados) {
-        resultado.textContent = 'Las notas todavía se están cargando. Intenta de nuevo en unos segundos.';
-        return;
-      }
 
       if (!dni) {
         resultado.textContent = 'Por favor, ingresa tu DNI.';
