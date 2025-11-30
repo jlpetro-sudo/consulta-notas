@@ -4,10 +4,11 @@
   <meta charset="UTF-8">
   <title>Consulta de notas</title>
   <style>
-    body { font-family: Arial, sans-serif; max-width: 500px; margin: 40px auto; }
+    body { font-family: Arial, sans-serif; max-width: 600px; margin: 40px auto; }
     input { padding: 8px; width: 100%; box-sizing: border-box; margin-bottom: 10px; }
     button { padding: 8px 16px; }
     #resultado { margin-top: 15px; font-weight: bold; }
+    #debug { margin-top: 25px; font-size: 0.9em; color: #555; white-space: pre-wrap; }
   </style>
 </head>
 <body>
@@ -18,6 +19,7 @@
   <button onclick="buscarNota()">Buscar</button>
 
   <p id="resultado"></p>
+  <div id="debug"></div>
 
   <script>
     let notas = {};
@@ -25,23 +27,28 @@
 
     function limpiarDni(str) {
       // Quita espacios, puntos y guiones
-      return String(str).replace(/[\s\.\-]/g, '');
+      return String(str).replace(/[\s.\-]/g, '');
     }
 
     // Cargar el CSV al iniciar la página
-    fetch('notas.csv')
+    fetch('notas.csv?ver=' + Date.now()) // ?ver=... evita caché
       .then(res => res.text())
       .then(texto => {
-        const lineas = texto.trim().split(/\r?\n/);
+        // Eliminar posible BOM al inicio
+        if (texto.charCodeAt(0) === 0xFEFF) {
+          texto = texto.slice(1);
+        }
 
-        // i = 1 para saltar la fila de encabezados
+        const lineas = texto.split(/\r?\n/).filter(l => l.trim() !== '');
+
+        // i = 1 para saltar encabezados (primera fila)
         for (let i = 1; i < lineas.length; i++) {
           const linea = lineas[i].trim();
           if (!linea) continue;
 
-          // Detectar si se usa ';' o ',' como separador
-          const separador = linea.includes(';') ? ';' : ',';
-          const partes = linea.split(separador);
+          // Detectar si usa ';' o ',' como separador
+          const sep = linea.includes(';') ? ';' : ',';
+          const partes = linea.split(sep);
 
           if (partes.length < 2) continue;
 
@@ -54,7 +61,15 @@
         }
 
         datosCargados = true;
-        console.log("DNIs cargados:", Object.keys(notas).length);
+
+        // Mostrar info de debug
+        const claves = Object.keys(notas);
+        const debugDiv = document.getElementById('debug');
+        debugDiv.textContent =
+          'Debug:\n' +
+          'Líneas leídas: ' + lineas.length + '\n' +
+          'DNIs cargados: ' + claves.length + '\n' +
+          'Primeros DNIs:\n' + claves.slice(0, 5).join('\n');
       })
       .catch(err => {
         console.error('Error al cargar notas.csv:', err);
@@ -86,4 +101,3 @@
   </script>
 </body>
 </html>
-
