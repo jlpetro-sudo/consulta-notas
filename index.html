@@ -3,7 +3,6 @@
 <head>
   <meta charset="UTF-8">
   <title>Consulta de notas</title>
-  <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
   <style>
     body { font-family: Arial, sans-serif; max-width: 500px; margin: 40px auto; }
     input { padding: 8px; width: 100%; box-sizing: border-box; margin-bottom: 10px; }
@@ -33,26 +32,26 @@
     fetch('notas.csv')
       .then(res => res.text())
       .then(texto => {
-        const parsed = Papa.parse(texto, {
-          header: false,       // no usamos nombres de columnas
-          skipEmptyLines: true // ignora filas vacías
-          // sin "delimiter": Papaparse intenta detectarlo (coma o punto y coma)
-        });
+        const lineas = texto.trim().split(/\r?\n/);
 
-        parsed.data.forEach((fila, index) => {
-          // fila es un array: [columna0, columna1, ...]
-          if (!fila || fila.length < 2) return;
+        // i = 1 para saltar la fila de encabezados
+        for (let i = 1; i < lineas.length; i++) {
+          const linea = lineas[i].trim();
+          if (!linea) continue;
 
-          // Saltar la primera fila (encabezados)
-          if (index === 0) return;
+          // Detectar si se usa ';' o ',' como separador
+          const separador = linea.includes(';') ? ';' : ',';
+          const partes = linea.split(separador);
 
-          const dni = limpiarDni(fila[0]);
-          const nota = String(fila[1]).trim();
+          if (partes.length < 2) continue;
+
+          const dni = limpiarDni(partes[0]);
+          const nota = String(partes[1] || '').trim();
 
           if (dni) {
             notas[dni] = nota;
           }
-        });
+        }
 
         datosCargados = true;
         console.log("DNIs cargados:", Object.keys(notas).length);
@@ -87,3 +86,4 @@
   </script>
 </body>
 </html>
+
